@@ -1,7 +1,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 This is a simple Python implementation that detects new records from '[https://stisys.haw-hamburg.de/](https://stisys.haw-hamburg.de/)'. 
-The script is checking every 10 minutes if the data has changed and then notifies you via your 'xxx@haw-hamburg.de' email account
+The script is checking every 10 minutes if the data has changed and then notifies you via your 'firstname.surname@haw-hamburg.de' email account
 
 <!-- GETTING STARTED -->
 ## Getting Started
