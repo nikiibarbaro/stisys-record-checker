@@ -130,3 +130,7 @@ dmypy.json
 
 #IntelliJ
 .idea
+
+#Projectdir
+/data/
+/data/count.dat
