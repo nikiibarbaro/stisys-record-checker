@@ -27,7 +27,6 @@ username = args.u
 password = args.p
 email = args.e
 
-
 COURSES_COUNT = 0
 UPDATE_INTERVAL_CHECK = 60*10
 
@@ -60,43 +59,16 @@ data = {
     'username': username,
     'password': password,
 }
-# prepare login
-login_post = requests.post('https://stisys.haw-hamburg.de/login.do', headers=headers, data=data)
-if login_post.status_code != 200:
-    print("Something went wrong, try again")
-    exit
-soup_login = BeautifulSoup(login_post.text, 'lxml')
-# check if login was successful
-login_state = soup_login.find_all('li')
-found = False
-for item in login_state:
-    found = re.search('.*fehlgeschlagen.*', item.text)
-if (found):
-    print("=== Login failed - Username or password did not match ===")
-    exit(0)
-else:
-    print("=== Login successful - You're logged in as {0} ===".format(username))
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-    'Accept-Language': 'de,en-US;q=0.7,en;q=0.3',
-    # 'Accept-Encoding': 'gzip, deflate, br',
-    'Connection': 'keep-alive',
-    'Referer': 'https://stisys.haw-hamburg.de/login.do',
-    'Upgrade-Insecure-Requests': '1',
-    'Sec-Fetch-Dest': 'document',
-    'Sec-Fetch-Mode': 'navigate',
-    'Sec-Fetch-Site': 'same-origin',
-    'Sec-Fetch-User': '?1',
-}
 
 
-def examination_check(headers, cookie):
+def examination_check(cookie):
     global COURSES_COUNT
+    global headers
     examination_get = requests.get('https://stisys.haw-hamburg.de/viewExaminationData.do', cookies=cookie,
                                    headers=headers)
     soup_examination = BeautifulSoup(examination_get.text, 'lxml')
-    logout_check(soup_examination)
+    if(logout_check(soup_examination)):
+        login()
     tables = soup_examination.find_all('tr', {"class": ["tablecontentbackdark", "tablecontentbacklight"]})
     courses = []
     for table in tables:
@@ -122,6 +94,38 @@ def get_time():
     time_now = time_now.strftime("%H:%M:%S")
     return time_now
 
+def login():
+    global headers
+    # prepare login
+    login_post = requests.post('https://stisys.haw-hamburg.de/login.do', headers=headers, data=data)
+    if login_post.status_code != 200:
+        print("Something went wrong, try again")
+        exit
+    soup_login = BeautifulSoup(login_post.text, 'lxml')
+    # check if login was successful
+    login_state = soup_login.find_all('li')
+    found = False
+    for item in login_state:
+        found = re.search('.*fehlgeschlagen.*', item.text)
+    if (found):
+        print("=== Login failed - Username or password did not match ===")
+        exit(0)
+    else:
+        print("=== Login successful - You're logged in as {0} ===".format(username))
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'de,en-US;q=0.7,en;q=0.3',
+        # 'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+        'Referer': 'https://stisys.haw-hamburg.de/login.do',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'same-origin',
+        'Sec-Fetch-User': '?1',
+    }
+    return login_post.cookies
 
 def logout_check(response):
     state = response.find_all('li')
@@ -130,6 +134,8 @@ def logout_check(response):
         found = re.search('.*Session Timeout!.*', item.text)
     if (found):
         print("=== Could not fetch data from StISys because the session is expired ===")
+        return True
+    return False
 
 def send_email(count):
     msg = MIMEText("")
@@ -145,6 +151,7 @@ def send_email(count):
     server.sendmail(email, toaddr, text)
     server.quit
 if __name__ == '__main__':
+    cookie = login()
     while True:
-        examination_check(headers, login_post.cookies)
+        examination_check(cookie)
         time.sleep(UPDATE_INTERVAL_CHECK)
