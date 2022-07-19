@@ -40,30 +40,23 @@ if (os.path.isfile(path_file)):
         output = f.read()
         COURSES_COUNT = int(output)
 
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-    'Accept-Language': 'de,en-US;q=0.7,en;q=0.3',
-    # 'Accept-Encoding': 'gzip, deflate, br',
-    'Referer': 'https://stisys.haw-hamburg.de/',
-    'Origin': 'https://stisys.haw-hamburg.de',
-    'Connection': 'keep-alive',
-    'Upgrade-Insecure-Requests': '1',
-    'Sec-Fetch-Dest': 'document',
-    'Sec-Fetch-Mode': 'navigate',
-    'Sec-Fetch-Site': 'same-origin',
-    'Sec-Fetch-User': '?1',
-}
-
-data = {
-    'username': username,
-    'password': password,
-}
 
 
 def examination_check(cookie):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'de,en-US;q=0.7,en;q=0.3',
+        # 'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+        'Referer': 'https://stisys.haw-hamburg.de/login.do',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'same-origin',
+        'Sec-Fetch-User': '?1',
+    }
     global COURSES_COUNT
-    global headers
     examination_get = requests.get('https://stisys.haw-hamburg.de/viewExaminationData.do', cookies=cookie,
                                    headers=headers)
     soup_examination = BeautifulSoup(examination_get.text, 'lxml')
@@ -88,14 +81,31 @@ def examination_check(cookie):
     with open(path_file, 'w') as f:
         f.write(str(COURSES_COUNT))
 
-
 def get_time():
     time_now = datetime.now()
     time_now = time_now.strftime("%H:%M:%S")
     return time_now
 
 def login():
-    global headers
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'de,en-US;q=0.7,en;q=0.3',
+        # 'Accept-Encoding': 'gzip, deflate, br',
+        'Referer': 'https://stisys.haw-hamburg.de/',
+        'Origin': 'https://stisys.haw-hamburg.de',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'same-origin',
+        'Sec-Fetch-User': '?1',
+    }
+
+    data = {
+        'username': username,
+        'password': password,
+    }
     # prepare login
     login_post = requests.post('https://stisys.haw-hamburg.de/login.do', headers=headers, data=data)
     if login_post.status_code != 200:
@@ -112,19 +122,6 @@ def login():
         exit(0)
     else:
         print("=== Login successful - You're logged in as {0} ===".format(username))
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'de,en-US;q=0.7,en;q=0.3',
-        # 'Accept-Encoding': 'gzip, deflate, br',
-        'Connection': 'keep-alive',
-        'Referer': 'https://stisys.haw-hamburg.de/login.do',
-        'Upgrade-Insecure-Requests': '1',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'same-origin',
-        'Sec-Fetch-User': '?1',
-    }
     return login_post.cookies
 
 def logout_check(response):
