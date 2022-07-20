@@ -28,11 +28,12 @@ via cmd or terminal
 
 options:
   -h, --help  show this help message and exit
-  -u U        username e.g. xxx123
-  -p P        password your're using to login
-  -e E        email adress where notifications being send to (optional)
+  -u U        username for StISys
+  -p P        password for the login
+  -e E        your HAW Hamburg email adress (optional)
+  -t T        interval in seconds for checking StISys (optional, default=600)
 ```sh
-   check_stisys.py -u 'username' -p 'password' -e 'emailadress'
+   check_stisys.py -u 'username' -p 'password' -e 'emailadress' -t 'interval'
    ```
 
 <!-- ROADMAP -->
