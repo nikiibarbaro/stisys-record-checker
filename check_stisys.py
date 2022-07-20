@@ -16,19 +16,21 @@ if not len(sys.argv) > 1:
 
 parser = argparse.ArgumentParser(description='Program for checking if new records are listed in StISys')
 parser.add_argument('-u',
-                    help='username e.g. xxx123')
+                    help='username for StISys')
 parser.add_argument('-p',
-                    help="password your're using to login")
+                    help='password for the login')
 parser.add_argument('-e',
-                    help="email adress where notifications being send to")
+                    help='your HAW Hamburg email adress')
+parser.add_argument('-t',
+                    help='interval in seconds for checking StISys', default=600)
 
 args = parser.parse_args()
 username = args.u
 password = args.p
 email = args.e
+interval = int(args.t)
 
 COURSES_COUNT = 0
-UPDATE_INTERVAL_CHECK = 60*10
 
 cwd = os.getcwd()
 path = os.path.join(cwd, "data")
@@ -57,8 +59,10 @@ def examination_check(cookie):
         'Sec-Fetch-User': '?1',
     }
     global COURSES_COUNT
-    examination_get = requests.get('https://stisys.haw-hamburg.de/viewExaminationData.do', cookies=cookie,
-                                   headers=headers)
+    #testing------------
+    #soup_examination = BeautifulSoup(open("test.html"), 'lxml')
+    #-------------------
+    examination_get = requests.get('https://stisys.haw-hamburg.de/viewExaminationData.do', cookies=cookie,headers=headers)
     soup_examination = BeautifulSoup(examination_get.text, 'lxml')
     if(logout_check(soup_examination)):
         login()
@@ -66,7 +70,8 @@ def examination_check(cookie):
     courses = []
     for table in tables:
         courses.append(table.find_all_next('td')[1].text)
-    if (len(courses) != COURSES_COUNT):
+    len1 = len(courses)
+    if (len(courses) > COURSES_COUNT):
         if (len(courses) - COURSES_COUNT) == 1:
             print("[{0}] {1} new record detected".format(get_time(), len(courses) - COURSES_COUNT))
             if email is not None:
@@ -151,4 +156,4 @@ if __name__ == '__main__':
     cookie = login()
     while True:
         examination_check(cookie)
-        time.sleep(UPDATE_INTERVAL_CHECK)
+        time.sleep(interval)
