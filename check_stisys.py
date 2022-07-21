@@ -31,6 +31,7 @@ email = args.e
 interval = int(args.t)
 
 COURSES_COUNT = 0
+cookie = None
 
 cwd = os.getcwd()
 path = os.path.join(cwd, "data")
@@ -44,8 +45,8 @@ if (os.path.isfile(path_file)):
 
 
 
-def examination_check(cookie):
-    headers = {
+def examination_check(cookie_stisys):
+    headers_examination = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
         'Accept-Language': 'de,en-US;q=0.7,en;q=0.3',
@@ -59,13 +60,20 @@ def examination_check(cookie):
         'Sec-Fetch-User': '?1',
     }
     global COURSES_COUNT
+    global cookie
+    cookie = cookie_stisys
     #testing------------
     #soup_examination = BeautifulSoup(open("test.html"), 'lxml')
     #-------------------
-    examination_get = requests.get('https://stisys.haw-hamburg.de/viewExaminationData.do', cookies=cookie,headers=headers)
+    examination_get = requests.get('https://stisys.haw-hamburg.de/viewExaminationData.do', cookies=cookie,headers=headers_examination)
     soup_examination = BeautifulSoup(examination_get.text, 'lxml')
-    if(logout_check(soup_examination)):
-        login()
+
+    if not (is_logged_in(soup_examination)):
+        print("Login...")
+        cookie = login()
+        examination_get = requests.get('https://stisys.haw-hamburg.de/viewExaminationData.do', cookies=cookie, headers=headers_examination)
+        soup_examination = BeautifulSoup(examination_get.text, 'lxml')
+
     tables = soup_examination.find_all('tr', {"class": ["tablecontentbackdark", "tablecontentbacklight"]})
     courses = []
     for table in tables:
@@ -92,7 +100,7 @@ def get_time():
     return time_now
 
 def login():
-    headers = {
+    headers_login = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
         'Accept-Language': 'de,en-US;q=0.7,en;q=0.3',
@@ -112,7 +120,7 @@ def login():
         'password': password,
     }
     # prepare login
-    login_post = requests.post('https://stisys.haw-hamburg.de/login.do', headers=headers, data=data)
+    login_post = requests.post('https://stisys.haw-hamburg.de/login.do', headers=headers_login, data=data)
     if login_post.status_code != 200:
         print("Something went wrong, try again")
         exit
@@ -129,15 +137,15 @@ def login():
         print("=== Login successful - You're logged in as {0} ===".format(username))
     return login_post.cookies
 
-def logout_check(response):
+def is_logged_in(response):
     state = response.find_all('li')
     found = False
     for item in state:
         found = re.search('.*Session Timeout!.*', item.text)
     if (found):
-        print("=== Could not fetch data from StISys because the session is expired ===")
-        return True
-    return False
+        print("Could not fetch data from StISys because the session is expired")
+        return False
+    return True
 
 def send_email(count):
     msg = MIMEText("")
